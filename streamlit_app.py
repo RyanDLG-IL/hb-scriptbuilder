@@ -17,6 +17,7 @@ from prompts.warmup_prompt import get_prompt as get_warmup_prompt
 from prompts.summary_prompt import get_prompt as get_summary_prompt
 from prompts.fact_check_prompt import get_prompt as get_fact_check_prompt
 from prompts.dei_check_prompt import get_prompt as get_dei_check_prompt
+from prompts.assessment_items_prompt import get_prompt as get_assessment_prompt
 
 # Load environment variables
 load_dotenv()
@@ -31,36 +32,45 @@ genai.configure(api_key=genai_api_key)
 activities_model = genai.GenerativeModel("gemini-1.5-flash")
 warmup_model = genai.GenerativeModel("gemini-1.5-flash")
 summary_model = genai.GenerativeModel("gemini-1.5-flash")
+assessment_model = genai.GenerativeModel("gemini-1.5-flash")
 fact_check_model = genai.GenerativeModel("gemini-1.5-flash")
 dei_check_model = genai.GenerativeModel("gemini-1.5-flash")
+assessment_fact_check_model = genai.GenerativeModel("gemini-1.5-flash")
+assessment_dei_check_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Initialize session state variables if they don't exist
 if 'lesson_blueprint' not in st.session_state:
     st.session_state.lesson_blueprint = None
-if 'assessment_items' not in st.session_state:
-    st.session_state.assessment_items = None
 if 'activities_output' not in st.session_state:
     st.session_state.activities_output = None
 if 'warmup_output' not in st.session_state:
     st.session_state.warmup_output = None
 if 'summary_output' not in st.session_state:
     st.session_state.summary_output = None
+if 'assessment_items' not in st.session_state:
+    st.session_state.assessment_items = None
 if 'fact_check_output' not in st.session_state:
     st.session_state.fact_check_output = None
 if 'dei_check_output' not in st.session_state:
     st.session_state.dei_check_output = None
+if 'assessment_fact_check' not in st.session_state:
+    st.session_state.assessment_fact_check = None
+if 'assessment_dei_check' not in st.session_state:
+    st.session_state.assessment_dei_check = None
 if 'has_generated' not in st.session_state:
     st.session_state.has_generated = False
 
 # Add reset function
 def reset_outputs():
     st.session_state.lesson_blueprint = None
-    st.session_state.assessment_items = None
     st.session_state.activities_output = None
     st.session_state.warmup_output = None
     st.session_state.summary_output = None
+    st.session_state.assessment_items = None
     st.session_state.fact_check_output = None
     st.session_state.dei_check_output = None
+    st.session_state.assessment_fact_check = None
+    st.session_state.assessment_dei_check = None
     st.session_state.has_generated = False
 
 # Helper functions
@@ -152,74 +162,41 @@ dei_reference_content = load_dei_reference_materials(reference_materials_folder)
 st.set_page_config(page_title="Lesson Script Generator", layout="wide")
 st.title("Lesson Script Generator")
 
-# Input fields for the lesson blueprint and assessment items
-st.markdown("Input your lesson blueprint and assessment items.")
+# Input field for the lesson blueprint only
+st.markdown("Input your lesson blueprint below. Assessment items will be automatically generated.")
 
-# Create a 2-column layout
-left_col, right_col = st.columns(2)
+# Lesson Blueprint input
+st.subheader("Lesson Blueprint")
 
-# Left column - Lesson Blueprint input
-with left_col:
-    st.subheader("Lesson Blueprint")
-    
-    blueprint_input_method = st.radio(
-        "How would you like to provide the Lesson Blueprint?",
-        options=["Paste text", "Upload file"],
-        horizontal=True,
-        key="blueprint_method"
-    )
-    
-    lesson_blueprint_text = ""
-    if blueprint_input_method == "Paste text":
-        lesson_blueprint_text = st.text_area("Paste your Lesson Blueprint here:", height=200, 
-                                    help="Paste the complete lesson blueprint created with the blueprint tool")
-    else:
-        uploaded_blueprint = st.file_uploader("Upload your Lesson Blueprint file", 
-                                            type=["txt", "pdf", "docx", "md"],
-                                            help="Upload the lesson blueprint file (PDF, Word, Text)")
-        if uploaded_blueprint is not None:
-            lesson_blueprint_text = extract_text_from_file(uploaded_blueprint)
-            st.success(f"Successfully loaded blueprint from {uploaded_blueprint.name}")
-            # Preview the extracted text
-            with st.expander("Preview extracted blueprint text"):
-                st.text(lesson_blueprint_text[:500] + ("..." if len(lesson_blueprint_text) > 500 else ""))
+blueprint_input_method = st.radio(
+    "How would you like to provide the Lesson Blueprint?",
+    options=["Paste text", "Upload file"],
+    horizontal=True,
+    key="blueprint_method"
+)
 
-# Right column - Assessment Items input
-with right_col:
-    st.subheader("Assessment Items")
-    
-    assessment_input_method = st.radio(
-        "How would you like to provide the Assessment Items?",
-        options=["Paste text", "Upload file"],
-        horizontal=True,
-        key="assessment_method"
-    )
-    
-    assessment_items_text = ""
-    if assessment_input_method == "Paste text":
-        assessment_items_text = st.text_area("Paste your Assessment Items here:", height=200, 
-                                    help="Paste the assessment items for this lesson")
-    else:
-        uploaded_assessment = st.file_uploader("Upload your Assessment Items file", 
-                                             type=["txt", "pdf", "docx", "md"],
-                                             help="Upload the assessment items file (PDF, Word, Text)")
-        if uploaded_assessment is not None:
-            assessment_items_text = extract_text_from_file(uploaded_assessment)
-            st.success(f"Successfully loaded assessment items from {uploaded_assessment.name}")
-            # Preview the extracted text
-            with st.expander("Preview extracted assessment items text"):
-                st.text(assessment_items_text[:500] + ("..." if len(assessment_items_text) > 500 else ""))
+lesson_blueprint_text = ""
+if blueprint_input_method == "Paste text":
+    lesson_blueprint_text = st.text_area("Paste your Lesson Blueprint here:", height=300, 
+                                help="Paste the complete lesson blueprint created with the blueprint tool")
+else:
+    uploaded_blueprint = st.file_uploader("Upload your Lesson Blueprint file", 
+                                        type=["txt", "pdf", "docx", "md"],
+                                        help="Upload the lesson blueprint file (PDF, Word, Text)")
+    if uploaded_blueprint is not None:
+        lesson_blueprint_text = extract_text_from_file(uploaded_blueprint)
+        st.success(f"Successfully loaded blueprint from {uploaded_blueprint.name}")
+        # Preview the extracted text
+        with st.expander("Preview extracted blueprint text"):
+            st.text(lesson_blueprint_text[:500] + ("..." if len(lesson_blueprint_text) > 500 else ""))
 
 # New functions for generating scripts
-def create_activities_script(blueprint, assessment_items):
+def create_activities_script(blueprint):
     # Use the activities prompt to generate the activities script
     prompt = get_activities_prompt(blueprint)
     
-    # Add assessment items to the prompt
+    # Add DEI considerations
     prompt += f"""
-    
-    #### Assessment Items:
-    {assessment_items}
     
     ### Additional DEI Considerations
     Please ensure your activities script follows these DEI guidelines:
@@ -291,36 +268,149 @@ def create_summary_script(blueprint, warmup_script, activities_script):
     except Exception as e:
         return f"Error generating summary script: {str(e)}"
 
-# Functions for fact checking and DEI checking
-def create_fact_check(blueprint, assessment_items, activities_script, warmup_script, summary_script):
-    # Call the fact check prompt function with all five parameters
-    prompt = get_fact_check_prompt(blueprint, assessment_items, activities_script, warmup_script, summary_script)
+# New function to generate assessment items
+def create_assessment_items(blueprint, activities_script, warmup_script, summary_script, fact_check, dei_check):
+    # Use the assessment prompt to generate assessment items
+    prompt = get_assessment_prompt(
+        blueprint, 
+        activities_script, 
+        warmup_script, 
+        summary_script, 
+        fact_check, 
+        dei_check
+    )
     
-    # No additional DEI content needed for fact checking
+    try:
+        response = assessment_model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Error generating assessment items: {str(e)}"
+
+# Functions for fact checking and DEI checking
+def create_fact_check(blueprint, activities_script, warmup_script, summary_script):
+    # Call the fact check prompt function with all parameters
+    prompt = get_fact_check_prompt(blueprint, "", activities_script, warmup_script, summary_script)
+    
     try:
         response = fact_check_model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"Error generating fact check: {str(e)}"
 
-def create_dei_check(blueprint, assessment_items, activities_script, warmup_script, summary_script):
-    # Updated to pass all parameters to the get_dei_check_prompt function
-    # Note that dei_reference_content is a global variable loaded earlier in the code
+def create_dei_check(blueprint, activities_script, warmup_script, summary_script):
+    # Updated to pass parameters to the get_dei_check_prompt function
     prompt = get_dei_check_prompt(
         blueprint, 
-        assessment_items, 
+        "", 
         activities_script, 
         warmup_script, 
         summary_script, 
         dei_reference_content
     )
     
-    # No need to add additional content since everything is now included in the prompt
     try:
         response = dei_check_model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"Error generating DEI check: {str(e)}"
+
+# Functions for assessment fact checking and DEI checking
+def create_assessment_fact_check(blueprint, assessment_items):
+    # Create a fact check for assessment items
+    prompt = f"""
+    ## Context ##
+    You are an expert educational content reviewer specializing in fact-checking assessment items for social studies. 
+    Your task is to carefully examine the provided assessment items for factual accuracy.
+
+    ## Objective ##
+    Review the provided assessment items to identify and report on any potential factual inaccuracies, 
+    misleading information, or content that requires verification.
+
+    ## Response ##
+    Provide a structured fact-check report with the following sections:
+
+    1. **Overall Accuracy Assessment**
+       - Overall accuracy rating (choose one): 
+         ✅ Highly Accurate (No factual errors found)
+         ⚠️ Generally Accurate (Contains minor factual issues)
+         ❌ Needs Significant Revision (Contains major factual errors)
+       - Brief summary of the assessment items' factual reliability
+
+    2. **Specific Factual Issues** (if any)
+       - For each potential factual issue, provide:
+         
+         **Original Question/Item**: [original text]
+         
+         - Fact-checking Report: [description of the issue with citations to reliable sources]
+         
+         **Revised Question/Item**: [revised version]
+         
+    ### Content to Review:
+    
+    #### Lesson Blueprint:
+    {blueprint}
+    
+    #### Assessment Items:
+    {assessment_items}
+    """
+    
+    try:
+        response = assessment_fact_check_model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Error generating assessment fact check: {str(e)}"
+
+def create_assessment_dei_check(blueprint, assessment_items):
+    # Create a DEI check for assessment items
+    prompt = f"""
+    ## Context ##
+    You are a DEI content review assistant trained to support the development of inclusive, accurate, 
+    and respectful Social Studies assessment items. Your review must follow Imagine Learning's DEI Content 
+    Development Guidelines, which emphasize diverse representation, critical analysis, factual grounding, 
+    and awareness of historical complexity.
+
+    ## Objective ##
+    Review the provided assessment items for Social Studies and determine how well they align with 
+    DEI expectations for the Social Studies space.
+
+    ## Response ##
+    Return your review using this structure:
+
+    **Overall Alignment Rating**:  
+    [Choose one: ✅ Strong Alignment | ⚠️ Moderate Alignment | ❌ Needs Significant Improvement]
+
+    **Key Findings**:  
+    - [List key strengths or concerns in the assessment items]
+
+    **Specific Recommendations**
+    
+    For each issue identified, provide:
+    
+    **Original Question/Item**: [original text]
+    
+    **Issue**: [description of the DEI concern]
+    
+    **Recommended Revision**: [suggested revision]
+    
+    **Rationale**: [brief explanation based on DEI principles]
+
+    ## Reference Materials ##
+    {dei_reference_content}
+    
+    ### Content to Review:
+    
+    #### Lesson Blueprint:
+    {blueprint}
+    
+    #### Assessment Items:
+    {assessment_items}
+    """
+    
+    try:
+        response = assessment_dei_check_model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Error generating assessment DEI check: {str(e)}"
 
 # Function to create a Word document
 def create_word_doc(title, content):
@@ -468,14 +558,16 @@ def create_combined_script_doc(warmup_script, activities_script, summary_script)
     buffer.seek(0)
     return buffer
 
-# Update the zip creation function to include the combined document
-def create_zip_with_all_docs(combined_doc, reports_doc):
+# Update the zip creation function to include assessment items
+def create_zip_with_all_docs(combined_script_doc, script_reports_doc, assessment_doc, assessment_reports_doc):
     # Create a ZIP file in memory
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
-        # Add only the generated scripts to the zip file
-        zip_file.writestr("Lesson_Script.docx", combined_doc.getvalue())
-        zip_file.writestr("DEI_Fact_Check_Reports.docx", reports_doc.getvalue())
+        # Add all generated content to the zip file
+        zip_file.writestr("Lesson_Script.docx", combined_script_doc.getvalue())
+        zip_file.writestr("Script_DEI_Fact_Check_Reports.docx", script_reports_doc.getvalue())
+        zip_file.writestr("Assessment_Items.docx", assessment_doc.getvalue())
+        zip_file.writestr("Assessment_DEI_Fact_Check_Reports.docx", assessment_reports_doc.getvalue())
     
     zip_buffer.seek(0)
     return zip_buffer
@@ -496,28 +588,22 @@ download_separator = st.sidebar.empty()
 if generate_button:
     if not lesson_blueprint_text.strip():
         st.warning("Please provide a lesson blueprint to generate scripts.")
-    elif not assessment_items_text.strip():
-        st.warning("Please provide assessment items to generate scripts.")
     else:
         # Store the inputs
         st.session_state.lesson_blueprint = lesson_blueprint_text
-        st.session_state.assessment_items = assessment_items_text
         
-        # Generate activities script - spinner in sidebar
+        # Step 1: Generate activities script
         with status_container.status("Creating activities script..."):
-            st.session_state.activities_output = create_activities_script(
-                lesson_blueprint_text,
-                assessment_items_text
-            )
+            st.session_state.activities_output = create_activities_script(lesson_blueprint_text)
         
-        # Generate warmup script - spinner in sidebar
+        # Step 2: Generate warmup script
         with status_container.status("Creating warmup script..."):
             st.session_state.warmup_output = create_warmup_script(
                 lesson_blueprint_text,
                 st.session_state.activities_output
             )
         
-        # Generate summary script - spinner in sidebar
+        # Step 3: Generate summary script
         with status_container.status("Creating summary script..."):
             st.session_state.summary_output = create_summary_script(
                 lesson_blueprint_text,
@@ -525,11 +611,10 @@ if generate_button:
                 st.session_state.activities_output
             )
         
-        # Show a single status for both checks in sidebar
-        with status_container.status("Running fact check and DEI check..."):
+        # Step 4: Fact check and DEI check the scripts
+        with status_container.status("Reviewing scripts for accuracy and inclusion..."):
             # Store local variables for the threads to work with
             blueprint_content = st.session_state.lesson_blueprint
-            assessment_content = st.session_state.assessment_items
             activities_content = st.session_state.activities_output
             warmup_content = st.session_state.warmup_output
             summary_content = st.session_state.summary_output
@@ -542,7 +627,6 @@ if generate_button:
             def run_fact_check():
                 fact_check_result[0] = create_fact_check(
                     blueprint_content,
-                    assessment_content,
                     activities_content, 
                     warmup_content,
                     summary_content
@@ -551,7 +635,6 @@ if generate_button:
             def run_dei_check():
                 dei_check_result[0] = create_dei_check(
                     blueprint_content,
-                    assessment_content,
                     activities_content, 
                     warmup_content,
                     summary_content
@@ -571,6 +654,53 @@ if generate_button:
             st.session_state.fact_check_output = fact_check_result[0]
             st.session_state.dei_check_output = dei_check_result[0]
         
+        # Step 5: Generate assessment items based on all previous content
+        with status_container.status("Creating assessment items..."):
+            st.session_state.assessment_items = create_assessment_items(
+                st.session_state.lesson_blueprint,
+                st.session_state.activities_output,
+                st.session_state.warmup_output,
+                st.session_state.summary_output,
+                st.session_state.fact_check_output,
+                st.session_state.dei_check_output
+            )
+        
+        # Step 6: Fact check and DEI check the assessment items
+        with status_container.status("Reviewing assessment items..."):
+            # Store variables for assessment check
+            blueprint_content = st.session_state.lesson_blueprint
+            assessment_content = st.session_state.assessment_items
+            
+            # Use lists to store assessment check results
+            assessment_fact_check_result = [None]
+            assessment_dei_check_result = [None]
+            
+            def run_assessment_fact_check():
+                assessment_fact_check_result[0] = create_assessment_fact_check(
+                    blueprint_content,
+                    assessment_content
+                )
+                
+            def run_assessment_dei_check():
+                assessment_dei_check_result[0] = create_assessment_dei_check(
+                    blueprint_content,
+                    assessment_content
+                )
+                
+            # Create and start assessment check threads
+            assessment_fact_thread = threading.Thread(target=run_assessment_fact_check)
+            assessment_dei_thread = threading.Thread(target=run_assessment_dei_check)
+            assessment_fact_thread.start()
+            assessment_dei_thread.start()
+            
+            # Wait for both to complete
+            assessment_fact_thread.join()
+            assessment_dei_thread.join()
+            
+            # Save results to session state
+            st.session_state.assessment_fact_check = assessment_fact_check_result[0]
+            st.session_state.assessment_dei_check = assessment_dei_check_result[0]
+        
         # All content is now generated - display final success message
         status_container.success("All content successfully generated!")
         
@@ -585,11 +715,6 @@ if generate_button:
 
 # Display outputs if they exist
 if st.session_state.has_generated:
-    # Create document files for individual scripts (for display in tabs)
-    activities_doc = create_word_doc("Activities Script", st.session_state.activities_output)
-    warmup_doc = create_word_doc("Warmup Script", st.session_state.warmup_output)
-    summary_doc = create_word_doc("Summary Script", st.session_state.summary_output)
-    
     # Create combined lesson script document
     combined_script_doc = create_combined_script_doc(
         st.session_state.warmup_output,
@@ -597,16 +722,28 @@ if st.session_state.has_generated:
         st.session_state.summary_output
     )
     
-    # Create reports document
-    reports_doc = create_word_doc(
-        "DEI and Fact-check Reports", 
+    # Create script reports document
+    script_reports_doc = create_word_doc(
+        "Script DEI and Fact-check Reports", 
         f"## Fact Check Report\n\n{st.session_state.fact_check_output}\n\n## DEI Check Report\n\n{st.session_state.dei_check_output}"
     )
     
-    # Create zip file with combined content
-    all_docs_zip = create_zip_with_all_docs(combined_script_doc, reports_doc)
+    # Create assessment documents
+    assessment_doc = create_word_doc("Assessment Items", st.session_state.assessment_items)
+    assessment_reports_doc = create_word_doc(
+        "Assessment DEI and Fact-check Reports",
+        f"## Assessment Fact Check Report\n\n{st.session_state.assessment_fact_check}\n\n## Assessment DEI Check Report\n\n{st.session_state.assessment_dei_check}"
+    )
     
-    # 1. SIDEBAR DOWNLOAD OPTIONS
+    # Create zip file with all content
+    all_docs_zip = create_zip_with_all_docs(
+        combined_script_doc, 
+        script_reports_doc,
+        assessment_doc,
+        assessment_reports_doc
+    )
+    
+    # SIDEBAR DOWNLOAD OPTIONS
     st.sidebar.markdown("### Download Options")
     
     # Make the Download All button visually distinct
@@ -624,7 +761,7 @@ if st.session_state.has_generated:
     st.sidebar.download_button(
         label="💾 Download All Content",
         data=all_docs_zip,
-        file_name="Lesson_Scripts.zip",
+        file_name="Lesson_Materials.zip",
         mime="application/zip",
         key="all_docs_download",
         use_container_width=True
@@ -641,7 +778,7 @@ if st.session_state.has_generated:
     </style>
     """, unsafe_allow_html=True)
     
-    # Simplified download options - just combined script and reports
+    # Individual download options
     st.sidebar.download_button(
         label="Lesson Script",
         data=combined_script_doc,
@@ -652,27 +789,48 @@ if st.session_state.has_generated:
     )
     
     st.sidebar.download_button(
-        label="DEI & Fact Check Reports",
-        data=reports_doc,
-        file_name="DEI_Fact_Check_Reports.docx",
+        label="Assessment Items",
+        data=assessment_doc,
+        file_name="Assessment_Items.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        key="reports_download",
+        key="assessment_download",
+        use_container_width=True
+    )
+    
+    st.sidebar.download_button(
+        label="Script DEI & Fact Check",
+        data=script_reports_doc,
+        file_name="Script_DEI_Fact_Check_Reports.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key="script_reports_download",
+        use_container_width=True
+    )
+    
+    st.sidebar.download_button(
+        label="Assessment DEI & Fact Check",
+        data=assessment_reports_doc,
+        file_name="Assessment_DEI_Fact_Check_Reports.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key="assessment_reports_download",
         use_container_width=True
     )
     
     st.markdown("---")
     st.header("Generated Content")
     
-    # 2. CONTENT IN TABS - removed blueprint and assessment items tabs
-    activities_tab, warmup_tab, summary_tab, fact_check_tab, dei_check_tab = st.tabs([
+    # CONTENT IN TABS
+    activities_tab, warmup_tab, summary_tab, assessment_tab, script_fact_tab, script_dei_tab, assessment_fact_tab, assessment_dei_tab = st.tabs([
         "Activities Script", 
         "Warmup Script", 
         "Summary Script",
-        "Fact Check", 
-        "DEI Check"
+        "Assessment Items",
+        "Script Fact Check", 
+        "Script DEI Check",
+        "Assessment Fact Check",
+        "Assessment DEI Check"
     ])
     
-    # Display content in each tab - removed blueprint and assessment tabs
+    # Display content in each tab
     with activities_tab:
         st.markdown("## Activities Script")
         st.write(st.session_state.activities_output)
@@ -684,11 +842,23 @@ if st.session_state.has_generated:
     with summary_tab:
         st.markdown("## Summary Script")
         st.write(st.session_state.summary_output)
+        
+    with assessment_tab:
+        st.markdown("## Assessment Items")
+        st.write(st.session_state.assessment_items)
     
-    with fact_check_tab:
-        st.markdown("## Fact Check Report")
+    with script_fact_tab:
+        st.markdown("## Script Fact Check Report")
         st.write(st.session_state.fact_check_output)
     
-    with dei_check_tab:
-        st.markdown("## DEI Check Report")
+    with script_dei_tab:
+        st.markdown("## Script DEI Check Report")
         st.write(st.session_state.dei_check_output)
+        
+    with assessment_fact_tab:
+        st.markdown("## Assessment Fact Check Report")
+        st.write(st.session_state.assessment_fact_check)
+        
+    with assessment_dei_tab:
+        st.markdown("## Assessment DEI Check Report")
+        st.write(st.session_state.assessment_dei_check)
