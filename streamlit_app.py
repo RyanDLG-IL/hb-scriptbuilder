@@ -593,18 +593,18 @@ if generate_button:
         st.session_state.lesson_blueprint = lesson_blueprint_text
         
         # Step 1: Generate activities script
-        with status_container.status("Creating activities script..."):
+        with status_container.status("Creating activities script"):
             st.session_state.activities_output = create_activities_script(lesson_blueprint_text)
         
         # Step 2: Generate warmup script
-        with status_container.status("Creating warmup script..."):
+        with status_container.status("Creating warmup script"):
             st.session_state.warmup_output = create_warmup_script(
                 lesson_blueprint_text,
                 st.session_state.activities_output
             )
         
         # Step 3: Generate summary script
-        with status_container.status("Creating summary script..."):
+        with status_container.status("Creating summary script"):
             st.session_state.summary_output = create_summary_script(
                 lesson_blueprint_text,
                 st.session_state.warmup_output,
@@ -612,7 +612,7 @@ if generate_button:
             )
         
         # Step 4: Fact check and DEI check the scripts
-        with status_container.status("Reviewing scripts for accuracy and inclusion..."):
+        with status_container.status("Reviewing scripts for accuracy and inclusion"):
             # Store local variables for the threads to work with
             blueprint_content = st.session_state.lesson_blueprint
             activities_content = st.session_state.activities_output
@@ -655,7 +655,7 @@ if generate_button:
             st.session_state.dei_check_output = dei_check_result[0]
         
         # Step 5: Generate assessment items based on all previous content
-        with status_container.status("Creating assessment items..."):
+        with status_container.status("Creating assessment items"):
             st.session_state.assessment_items = create_assessment_items(
                 st.session_state.lesson_blueprint,
                 st.session_state.activities_output,
@@ -666,7 +666,7 @@ if generate_button:
             )
         
         # Step 6: Fact check and DEI check the assessment items
-        with status_container.status("Reviewing assessment items..."):
+        with status_container.status("Reviewing assessment items"):
             # Store variables for assessment check
             blueprint_content = st.session_state.lesson_blueprint
             assessment_content = st.session_state.assessment_items
