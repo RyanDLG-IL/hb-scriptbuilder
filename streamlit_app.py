@@ -150,11 +150,10 @@ dei_reference_content = load_dei_reference_materials(reference_materials_folder)
 
 # Streamlit page setup
 st.set_page_config(page_title="Lesson Script Generator", layout="wide")
-st.title("Lesson Activities, Warmup, and Summary Script Generator")
+st.title("Lesson Script Generator")
 
 # Input fields for the lesson blueprint and assessment items
-st.markdown("### Enter Lesson Information")
-st.markdown("Use this form to input your pre-existing lesson blueprint and assessment items. All necessary metadata (unit title, lesson title, lesson question, etc.) should be included in the lesson blueprint.")
+st.markdown("Input your lesson blueprint and assessment items.")
 
 # Create a 2-column layout
 left_col, right_col = st.columns(2)
@@ -294,17 +293,10 @@ def create_summary_script(blueprint, warmup_script, activities_script):
 
 # Functions for fact checking and DEI checking
 def create_fact_check(blueprint, assessment_items, activities_script, warmup_script, summary_script):
-    # Update to pass all five parameters to the get_fact_check_prompt function
+    # Call the fact check prompt function with all five parameters
     prompt = get_fact_check_prompt(blueprint, assessment_items, activities_script, warmup_script, summary_script)
     
-    # Add DEI guidelines (no need to add assessment items and summary script since they're now part of the prompt)
-    prompt += f"""
-    
-    ### Additional Context
-    While conducting the fact check, please be aware of these DEI guidelines:
-    {dei_reference_content}
-    """
-    
+    # No additional DEI content needed for fact checking
     try:
         response = fact_check_model.generate_content(prompt)
         return response.text.strip()
@@ -493,8 +485,12 @@ st.sidebar.title("Controls")
 generate_button = st.sidebar.button("Generate Scripts", use_container_width=True, key="generate_btn")
 reset_button = st.sidebar.button("Reset Tool", on_click=reset_outputs, use_container_width=True, key="reset_btn")
 
-# Add a separator between controls and download options
+# Add a status section in sidebar
 st.sidebar.markdown("---")
+status_container = st.sidebar.container()
+
+# Add a separator between status and download options (initially hidden)
+download_separator = st.sidebar.empty()
 
 # Update content generation workflow
 if generate_button:
@@ -507,30 +503,30 @@ if generate_button:
         st.session_state.lesson_blueprint = lesson_blueprint_text
         st.session_state.assessment_items = assessment_items_text
         
-        # Generate activities script
-        with st.spinner("Generating activities script..."):
+        # Generate activities script - spinner in sidebar
+        with status_container.status("Creating activities script..."):
             st.session_state.activities_output = create_activities_script(
                 lesson_blueprint_text,
                 assessment_items_text
             )
         
-        # Generate warmup script
-        with st.spinner("Generating warmup script..."):
+        # Generate warmup script - spinner in sidebar
+        with status_container.status("Creating warmup script..."):
             st.session_state.warmup_output = create_warmup_script(
                 lesson_blueprint_text,
                 st.session_state.activities_output
             )
         
-        # Generate summary script
-        with st.spinner("Generating summary script..."):
+        # Generate summary script - spinner in sidebar
+        with status_container.status("Creating summary script..."):
             st.session_state.summary_output = create_summary_script(
                 lesson_blueprint_text,
                 st.session_state.warmup_output,
                 st.session_state.activities_output
             )
         
-        # Show a single spinner while both checks run
-        with st.spinner("Running fact check and DEI check..."):
+        # Show a single status for both checks in sidebar
+        with status_container.status("Running fact check and DEI check..."):
             # Store local variables for the threads to work with
             blueprint_content = st.session_state.lesson_blueprint
             assessment_content = st.session_state.assessment_items
@@ -575,8 +571,14 @@ if generate_button:
             st.session_state.fact_check_output = fact_check_result[0]
             st.session_state.dei_check_output = dei_check_result[0]
         
+        # All content is now generated - display final success message
+        status_container.success("All content successfully generated!")
+        
         # Set flag that content has been generated
         st.session_state.has_generated = True
+        
+        # Show separator for download section
+        download_separator.markdown("---")
         
         # Use the current rerun method
         st.rerun()

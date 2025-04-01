@@ -21,6 +21,10 @@ def get_prompt(blueprint, assessment_items, activities_script, warmup_script, su
 
     2. **Specific Factual Issues** (if any)
        - For each potential factual issue, provide:
+       
+         **Importance level**: [Low, Medium, High]
+         
+         **Location**: [script section and timestamp]
          
          **Original Text**: [original text]
          
@@ -28,9 +32,10 @@ def get_prompt(blueprint, assessment_items, activities_script, warmup_script, su
          
          **Revised Text**: [revised version]
          
+         ----- [Repeat for each identified issue with line separations]
+         
          Note: The corrected version should contain the complete paragraph or item being revised, not just the corrected portion.
          
-         Importance level: [Low, Medium, High]
 
     3. **Verification Needs**
        - Identify any claims or information that should be verified before finalizing

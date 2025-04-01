@@ -38,8 +38,6 @@ def get_prompt(blueprint, assessment_items, activities_script, warmup_script, su
     ## Response ##
     Return your review using this structure:
 
-    ## DEI Review Summary ##
-
     **Overall Alignment Rating**:  
     [Choose one: ✅ Strong Alignment | ⚠️ Moderate Alignment | ❌ Needs Significant Improvement]
 
@@ -50,20 +48,22 @@ def get_prompt(blueprint, assessment_items, activities_script, warmup_script, su
     - [List key strengths or concerns in the scripts]
     - [Note any areas of bias, exclusion, or misleading framing]
 
-    ## Detailed Review ##
+    ## Detailed Review
 
-    ### Activities Script Review
+    **Activities Script Review**
     [Specific DEI feedback on the activities script]
     
-    ### Warmup Script Review
+    **Warmup Script Review**
     [Specific DEI feedback on the warmup script]
     
-    ### Summary Script Review
+    **Summary Script Review**
     [Specific DEI feedback on the summary script]
 
-    ## Specific Recommendations ##
+    ## Specific Recommendations
     
     For each issue identified, provide:
+    
+    **Location**: [script section and timestamp]
     
     **Original Text**: [original text]
     
@@ -72,8 +72,11 @@ def get_prompt(blueprint, assessment_items, activities_script, warmup_script, su
     **Recommended Revision**: [suggested revision]
     
     **Rationale**: [brief explanation based on DEI principles]
+    
+    ----- [Repeat for each identified issue with line separations]
+    
 
-    ## Positive Examples ##  
+    ## Positive Examples 
     [Highlight inclusive framing, representation, or language found in the scripts]
 
     ### Reference Materials (Provided by the teacher):
