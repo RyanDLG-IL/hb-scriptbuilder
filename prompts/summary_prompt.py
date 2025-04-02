@@ -14,13 +14,12 @@ def get_prompt(unit_title, lesson_title, lesson_question, learning_objectives, s
     - **Instructional Activity Script(s)**: {activity_script}
 
     ## Objective ##
-    Using the provided inputs and the "CCAG-EdgeEX Lesson Summary Activity-270325-150447" from your knowledge base, create a concise, structured lesson summary script (2-4 minutes total) that:
+    Using the provided inputs and the "CCAG-EdgeEX Lesson Summary Activity-270325-150447" from your knowledge base, create a concise, structured lesson summary script (2–4 minutes total) that:
 
     - Clearly restates the lesson question upfront.
     - Explicitly reviews the student-friendly learning goals as provided.
     - Summarizes essential concepts, ideas, skills, historical context, and human impacts covered in the lesson, explicitly connecting these to the lesson question and goals.
     - Contextually reinforces previously introduced vocabulary without defining or introducing new terms.
-    - Includes specific, engaging visual aid suggestions (charts, maps, graphic organizers, images) that reinforce summary content clearly and meaningfully.
 
     ## Key Guidelines ##
     - The summary must stand alone. Avoid explicit references to prior instructional segments (do NOT use phrases like "in this lesson you learned," "today," or "you just learned"). Instead, consistently use phrasing such as "In this lesson we explored..."
@@ -28,8 +27,7 @@ def get_prompt(unit_title, lesson_title, lesson_question, learning_objectives, s
     - Summarize key points in logical, sequential order for maximum clarity and cognitive retention (e.g., causes → key events → consequences).
     - Selectively incorporate essential historical details (dates, key people, events, specific quantities) concisely and clearly.
     - Explicitly highlight human impacts, including social, cultural, political, and economic consequences for affected populations, particularly emphasizing nuanced outcomes.
-    - Consistently maintain the visual layouts, images, and examples from the warm-up and instructional scripts—do not introduce new visuals or layouts.
-    - In the generation of all content refer to the DEI Guidelines in your knowledge base to ensure compliance
+    - Do **NOT** include suggestions for visual layouts, multimedia, or specific slide formatting.
 
     ## Style ##
     - Clear, concise, structured, and student-friendly.
@@ -44,30 +42,18 @@ def get_prompt(unit_title, lesson_title, lesson_question, learning_objectives, s
     - Middle and high school students independently reviewing lesson content, preparing for assessments, or reinforcing their understanding.
     - Assume varying levels of prior mastery and ensure clarity and accessibility.
 
-    ## Response ##
+    ## Response Format ##
     Provide your response in the following structured format:
 
-    ANCHOR (30 sec)
+    **ANCHOR (30 sec)**  
+    - [Narration restating the lesson question and previewing the summary.]
 
-    [Teacher narration explicitly restating the lesson question and briefly previewing the summary content.]
+    **GOALS (30 sec)**  
+    - [Restate 2–3 student-friendly learning goals exactly as provided.]
 
-    [Visual Aid Suggestion: Same anchor image from warm-up slide, clearly displaying the lesson question, lesson title, and lesson summary icon.]
+    **KEY CONCEPTS (1–3 min)**  
+    - [Narration summarizing essential concepts, vocabulary (bolded and underlined as previously introduced), historical details, and human impacts.]
+    - [Clearly connect these ideas back to the lesson question and goals.]
 
-    [On-Screen Text: Lesson question and lesson title.]
-
-    GOALS (30 sec)
-
-    [Explicitly restate 2-3 student-friendly learning goals exactly as provided, beginning with action verbs.]
-
-    [Visual Aid Suggestion: Same graphic organizer and layout from the warm-up.]
-
-    KEY CONCEPTS (1-3 min)
-
-    [Concise, sequentially organized narration summarizing essential concepts, vocabulary (bolded and underlined as previously introduced), and key skills or events from the lesson.]
-
-    [Clearly explain how these summarized elements directly answer or connect to the lesson question and goals.]
-
-    [Highlight human impacts, nuanced outcomes, and specific historical or contextual details where relevant.]
-
-    [Visual Aid Suggestion: Clearly organized visual presentation (charts, timelines, maps, graphic organizers) summarizing key concepts, vocabulary, and ideas.]
+    ***GENERATE THE FULL LESSON SUMMARY IN ONE OUTPUT WITHOUT ASKING FOR CONFIRMATION***
     """

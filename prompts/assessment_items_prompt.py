@@ -9,6 +9,7 @@ def get_prompt(blueprint, activities_script, warmup_script, summary_script, fact
     3. Ensure factual accuracy and cultural sensitivity in all items.
     4. Follow the DOK level guidelines strictly.
     5. Apply appropriate language and complexity for the grade level.
+    6. Ensure that all generated items are multiple choice items with 4 answer choices or multiple select items with 5 answer choices.
 
     ### Required Assessment Items (Generate ALL of these):
     
@@ -16,8 +17,8 @@ def get_prompt(blueprint, activities_script, warmup_script, summary_script, fact
     2. Instructional Segment 1 Item 2 (Objective 1 DOK Low) - needs Feedback
     3. Instructional Segment 2 Item 1 (Objective 2 DOK Low) - needs Feedback
     4. Instructional Segment 2 Item 2 (Objective 2 DOK Low) - needs Feedback
-    5. Instructional Segment 3 Item 1 (Objective 3 DOK High) - needs Feedback
-    6. Instructional Segment 3 Item 2 (Objective 3 DOK High) - needs Feedback
+    5. Instructional Segment 3 Item 1 (Objective 2 DOK High) - needs Feedback
+    6. Instructional Segment 3 Item 2 (Objective 2 DOK High) - needs Feedback
     7. Objective 1 DOK 1 SSA Item 1 - needs Feedback
     8. Objective 1 DOK 1 SSA Item 2 - needs Feedback
     9. Objective 1 DOK 2 SSA Item 1 - needs Feedback
@@ -30,8 +31,8 @@ def get_prompt(blueprint, activities_script, warmup_script, summary_script, fact
     16. Objective 3 DOK 1 SSA Item 2 - needs Feedback
     17. Objective 3 DOK 2 SSA Item 1 - needs Feedback
     18. Objective 3 DOK 2 SSA Item 2 - needs Feedback
-    19. Objective 3 DOK 3 SSA Item 1 - needs Feedback
-    20. Objective 3 DOK 3 SSA Item 2 - needs Feedback
+    19. Objective 3 DOK 2 SSA Item 1 - needs Feedback
+    20. Objective 3 DOK 2 SSA Item 2 - needs Feedback
     21. Objective 1 DOK 1 Assessment Item 1
     22. Objective 1 DOK 1 Assessment Item 2
     23. Objective 1 DOK 1 Assessment Item 3
@@ -62,18 +63,16 @@ def get_prompt(blueprint, activities_script, warmup_script, summary_script, fact
     48. Objective 3 DOK 2 Assessment Item 4
     49. Objective 3 DOK 2 Assessment Item 5
     50. Objective 3 DOK 2 Assessment Item 6
-    51. Objective 3 DOK 3 Assessment Item 1
-    52. Objective 3 DOK 3 Assessment Item 2
-    53. Objective 3 DOK 3 Assessment Item 3
-    54. Objective 3 DOK 3 Assessment Item 4
+    51. Objective 3 DOK 2 Assessment Item 1
+    52. Objective 3 DOK 2 Assessment Item 2
+    53. Objective 3 DOK 2 Assessment Item 3
+    54. Objective 3 DOK 2 Assessment Item 4
 
     ### Social Studies DOK Level Guidelines:
     - DOK 1 (Recall of Information): Items ask students to recall facts, terms, concepts, trends, generalizations, and theories. May require students to recognize or identify specific information contained in maps, charts, tables, graphs, or other graphics. Items typically ask who, what, when, and where. Simple "describe" and "explain" tasks that require only recitation or reproduction of information are DOK 1.
     
     - DOK 2 (Basic Reasoning): Items require mental processing beyond recalling information. Students may need to compare or contrast people, places, events, and concepts; convert information from one form to another; classify items into meaningful categories; or describe/explain issues, problems, patterns, cause and effect, significance, relationships, points of view or processes in their own words. A DOK 2 explanation requires students to go beyond simple recall to discuss how or why.
-    
-    - DOK 3 (Application): Items require reasoning, use of evidence, and higher-level thinking. Students must justify the how and why through application and evidence. This includes drawing and justifying conclusions based on evidence; using concepts to explain how and why; analyzing similarities and differences among issues; proposing and evaluating solutions; recognizing misconceptions; or making connections across time and place to explain concepts.
-
+   
     ### Item Format Guidelines:
     - Multiple-choice items will consist of 4 answer choices. Only 1 answer choice should be correct. 
     - Incorrect options should be based on common misconceptions or misunderstandings. 

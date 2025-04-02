@@ -18,6 +18,7 @@ from prompts.summary_prompt import get_prompt as get_summary_prompt
 from prompts.fact_check_prompt import get_prompt as get_fact_check_prompt
 from prompts.dei_check_prompt import get_prompt as get_dei_check_prompt
 from prompts.assessment_items_prompt import get_prompt as get_assessment_prompt
+from prompts.script_visuals_tasks_prompt import get_prompt as get_visuals_tasks_prompt
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,7 @@ fact_check_model = genai.GenerativeModel("gemini-1.5-flash")
 dei_check_model = genai.GenerativeModel("gemini-1.5-flash")
 assessment_fact_check_model = genai.GenerativeModel("gemini-1.5-flash")
 assessment_dei_check_model = genai.GenerativeModel("gemini-1.5-flash")
+visuals_tasks_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Initialize session state variables if they don't exist
 if 'lesson_blueprint' not in st.session_state:
@@ -57,6 +59,8 @@ if 'assessment_fact_check' not in st.session_state:
     st.session_state.assessment_fact_check = None
 if 'assessment_dei_check' not in st.session_state:
     st.session_state.assessment_dei_check = None
+if 'visuals_tasks_output' not in st.session_state:
+    st.session_state.visuals_tasks_output = None
 if 'has_generated' not in st.session_state:
     st.session_state.has_generated = False
 
@@ -71,6 +75,7 @@ def reset_outputs():
     st.session_state.dei_check_output = None
     st.session_state.assessment_fact_check = None
     st.session_state.assessment_dei_check = None
+    st.session_state.visuals_tasks_output = None
     st.session_state.has_generated = False
 
 # Helper functions
@@ -412,6 +417,25 @@ def create_assessment_dei_check(blueprint, assessment_items):
     except Exception as e:
         return f"Error generating assessment DEI check: {str(e)}"
 
+# Add function to create visuals and tasks suggestions
+def create_visuals_tasks_suggestions(blueprint, activities_script, warmup_script, summary_script, 
+                                     fact_check, dei_check, assessment_items):
+    prompt = get_visuals_tasks_prompt(
+        blueprint, 
+        activities_script, 
+        warmup_script, 
+        summary_script,
+        fact_check,
+        dei_check,
+        assessment_items
+    )
+    
+    try:
+        response = visuals_tasks_model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Error generating visuals and tasks suggestions: {str(e)}"
+
 # Function to create a Word document
 def create_word_doc(title, content):
     doc = Document()
@@ -558,8 +582,9 @@ def create_combined_script_doc(warmup_script, activities_script, summary_script)
     buffer.seek(0)
     return buffer
 
-# Update the zip creation function to include assessment items
-def create_zip_with_all_docs(combined_script_doc, script_reports_doc, assessment_doc, assessment_reports_doc):
+# Update the zip creation function to include visuals/tasks
+def create_zip_with_all_docs(combined_script_doc, script_reports_doc, assessment_doc, 
+                            assessment_reports_doc, visuals_tasks_doc):
     # Create a ZIP file in memory
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
@@ -568,6 +593,7 @@ def create_zip_with_all_docs(combined_script_doc, script_reports_doc, assessment
         zip_file.writestr("Script_DEI_Fact_Check_Reports.docx", script_reports_doc.getvalue())
         zip_file.writestr("Assessment_Items.docx", assessment_doc.getvalue())
         zip_file.writestr("Assessment_DEI_Fact_Check_Reports.docx", assessment_reports_doc.getvalue())
+        zip_file.writestr("Visual_and_Task_Suggestions.docx", visuals_tasks_doc.getvalue())
     
     zip_buffer.seek(0)
     return zip_buffer
@@ -701,6 +727,18 @@ if generate_button:
             st.session_state.assessment_fact_check = assessment_fact_check_result[0]
             st.session_state.assessment_dei_check = assessment_dei_check_result[0]
         
+        # Step 7: Generate visuals and tasks suggestions
+        with status_container.status("Creating visual and task suggestions"):
+            st.session_state.visuals_tasks_output = create_visuals_tasks_suggestions(
+                st.session_state.lesson_blueprint,
+                st.session_state.activities_output,
+                st.session_state.warmup_output,
+                st.session_state.summary_output,
+                st.session_state.fact_check_output,
+                st.session_state.dei_check_output,
+                st.session_state.assessment_items
+            )
+        
         # All content is now generated - display final success message
         status_container.success("All content successfully generated!")
         
@@ -735,12 +773,19 @@ if st.session_state.has_generated:
         f"## Assessment Fact Check Report\n\n{st.session_state.assessment_fact_check}\n\n## Assessment DEI Check Report\n\n{st.session_state.assessment_dei_check}"
     )
     
-    # Create zip file with all content
+    # Add visuals and tasks document
+    visuals_tasks_doc = create_word_doc(
+        "Visual and Task Suggestions", 
+        st.session_state.visuals_tasks_output
+    )
+    
+    # Create zip file with all content including new document
     all_docs_zip = create_zip_with_all_docs(
         combined_script_doc, 
         script_reports_doc,
         assessment_doc,
-        assessment_reports_doc
+        assessment_reports_doc,
+        visuals_tasks_doc
     )
     
     # SIDEBAR DOWNLOAD OPTIONS
@@ -815,11 +860,20 @@ if st.session_state.has_generated:
         use_container_width=True
     )
     
+    st.sidebar.download_button(
+        label="Visual & Task Suggestions",
+        data=visuals_tasks_doc,
+        file_name="Visual_and_Task_Suggestions.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key="visuals_tasks_download",
+        use_container_width=True
+    )
+    
     st.markdown("---")
     st.header("Generated Content")
     
     # CONTENT IN TABS
-    activities_tab, warmup_tab, summary_tab, assessment_tab, script_fact_tab, script_dei_tab, assessment_fact_tab, assessment_dei_tab = st.tabs([
+    activities_tab, warmup_tab, summary_tab, assessment_tab, script_fact_tab, script_dei_tab, assessment_fact_tab, assessment_dei_tab, visuals_tasks_tab = st.tabs([
         "Activities Script", 
         "Warmup Script", 
         "Summary Script",
@@ -827,7 +881,8 @@ if st.session_state.has_generated:
         "Script Fact Check", 
         "Script DEI Check",
         "Assessment Fact Check",
-        "Assessment DEI Check"
+        "Assessment DEI Check",
+        "Visual & Task Suggestions"
     ])
     
     # Display content in each tab
@@ -862,3 +917,7 @@ if st.session_state.has_generated:
     with assessment_dei_tab:
         st.markdown("## Assessment DEI Check Report")
         st.write(st.session_state.assessment_dei_check)
+    
+    with visuals_tasks_tab:
+        st.markdown("## Visual and Task Suggestions")
+        st.write(st.session_state.visuals_tasks_output)
